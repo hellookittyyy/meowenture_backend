@@ -106,3 +106,8 @@ def change_password_view(request):
             'access': str(refresh.access_token),
         }
     })
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def logout_view(request):
+    return JsonResponse({'message': 'Logged out successfully'})
