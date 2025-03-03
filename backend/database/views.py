@@ -78,3 +78,31 @@ def profile_view(request):
         except Exception as e:
             return JsonResponse({'message': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password_view(request):
+    data = json.loads(request.body)
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    
+    user = request.user
+    
+    # Check if old password is correct
+    if not user.check_password(old_password):
+        return JsonResponse({'message': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Set new password
+    user.set_password(new_password)
+    user.save()
+    
+    # Generate new tokens since password change invalidates old ones
+    refresh = RefreshToken.for_user(user)
+    
+    return JsonResponse({
+        'message': 'Password changed successfully',
+        'tokens': {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
+    })
