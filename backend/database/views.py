@@ -26,3 +26,30 @@ def register_view(request):
     user.save()
     
     return JsonResponse({'message': 'User registered successfully'}, status=status.HTTP_201_CREATED)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view(request):
+    data = json.loads(request.body)
+    email = data.get('email') 
+    password = data.get('password')
+
+    user = authenticate(email=email, password=password)
+
+    if user is not None:
+        refresh = RefreshToken.for_user(user)
+        return JsonResponse({
+            'message': 'Login successful',
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            },
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'profile_image': user.profile_image_url
+            },
+        })
+    else:
+        return JsonResponse({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
