@@ -11,22 +11,34 @@ class CustomUser(AbstractUser):
     is_active = models.BooleanField(default=True)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
-    profile_image = models.ImageField(upload_to='profile_images/', null=True, default='profile_images/default.png')
+    profile_image = models.ForeignKey('Avatar', on_delete=models.SET_NULL, null=True, related_name='users')
+    coins = models.IntegerField(default=99)
 
     USERNAME_FIELD = "email" 
     REQUIRED_FIELDS = ["username"]
 
     objects = CustomUserManager()
-
+    
     def __str__(self):
         return self.username
     
     @property
     def profile_image_url(self):
-        if self.profile_image:
-            return self.profile_image.url
-        return '/static/profile_images/default.png'
+        if self.profile_image and self.profile_image.image:
+            return self.profile_image.image.url
+        return '/media/profile_images/avatar_1.png'
 
+    def save(self, *args, **kwargs):
+        if not self.profile_image:
+            default_avatar = Avatar.objects.filter(default=True).first()
+            if default_avatar:
+                self.profile_image = default_avatar
+            else:
+                first_avatar = Avatar.objects.first()
+                if first_avatar:
+                    self.profile_image = first_avatar
+        super().save(*args, **kwargs)
+    
 class Choice(models.Model):
     dialog = models.ForeignKey('Dialog', on_delete=models.CASCADE, related_name='choices')
     text = models.CharField(max_length=255)
@@ -60,7 +72,36 @@ class Dialog(models.Model):
     is_choice = models.BooleanField(default=False)
     stage_number = models.IntegerField(default=1)
     background = models.ImageField(upload_to='dialog_backgrounds/', default='dialog_backgrounds/default.png')
-    
+
+class Progress(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='progress')
+    # level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='progress', null=True)
+    coins = models.IntegerField(default=0)
+    attempts = models.IntegerField(default=0)
+    time_spent = models.IntegerField(default=0)
+    total_final_points = models.IntegerField(default=0)
+    is_level = models.BooleanField(default=False)
+    current_phase = models.IntegerField(default=1)
+
+class Avatar(models.Model):
+    image = models.ImageField(upload_to='profile_images/', default='profile_images/default.png')
+    price = models.IntegerField(default=0)
+    default = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        if not self.image:
+            self.image = 'profile_images/default.png'
+        super().save(*args, **kwargs)
+
+    @property
+    def url(self):
+        return self.image.url if self.image else '/media/profile_images/default.png'
+
+class UserAvatar(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='user_avatar')
+    avatar = models.ForeignKey(Avatar, on_delete=models.CASCADE, related_name='user_avatar')
+
+
 # class OTP(models.Model):
 #     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
 #     otp = models.CharField(max_length=6)

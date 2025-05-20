@@ -35,13 +35,27 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8081",  # Your game's origin
     "http://localhost:5500",
     "http://127.0.0.1:5500",
     "http://localhost:5501",
     "http://127.0.0.1:5501"
 ]
 
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
 # SESSION_COOKIE_SAMESITE = None  
 # SESSION_COOKIE_SECURE = False 
 
